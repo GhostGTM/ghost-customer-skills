@@ -8,6 +8,8 @@ Read `${CLAUDE_PLUGIN_ROOT}/references/working-with-ghost.md`. This is a confirm
 
 Read the current state first so the change targets real rows: `search_accounts` for the account, `find_person` or `get_account_network` for the person id, `get_deal_context` for a deal id, `read_source` for a source id. Quote the before value.
 
+Resolve identifier types against the live operation catalog. For `person_field`, `attendance_correction`, and contact `workspace_label` changes, the field named `person_id` takes the account membership row's **`account_people.id`**, not the canonical person's `person_id`. Relationship endpoints of kind `account_person` also take `account_people.id`; endpoints of kind `customer` and the outer `customer_id` take `customers.id`. `source_id` and `link_source_ids` take `customer_sources.id`. Verify that each row belongs to the intended account and workspace before presenting the payload; never substitute a similarly named id.
+
 Build one `graph.apply_update` (writes immediately) or `graph.propose_update` (leaves a proposal for review in the app) with `customer_id`, a `summary` under 300 characters, and `changes[]`. Every change requires `kind` and a human-readable `target_label`, plus the fields below. Keep `changes` to at most ten items. Kinds and what each needs:
 
 - `person_field`: `person_id`, `field` (name, title, role_inferred, status, department, is_champion, email, linkedin_url, headline, location), `after`. Booleans as the strings `"true"` or `"false"`.

@@ -14,11 +14,11 @@ Explain a halt from the log and the step's success criterion before proposing a 
 
 **Mutations, each confirmed.** State the workflow, the action, and what it will touch, then wait for a yes. Submit with `POST /operations`, the user's words as `reason`, and a fresh `Idempotency-Key`; poll the receipt.
 
-- Start a run: `workflows.builder.start_workflow_run` with `fidelity` (`sample` first unless the user asks for full) and `user_said` copied verbatim from `reason`. Full runs execute outward cards behind approved gates; say so.
+- Start a run: `workflows.builder.start_workflow_run` with `fidelity` and `user_said` copied verbatim from the actual approval in `reason`. Bare run or test approval means `sample`. Full requires explicit real/full/live run or delivery approval; never promote sample consent to full. The direct `workflows.run` route has the same consent/readiness checks and defaults to sample. Full runs execute outward cards behind approved gates; say so.
 - Approve or reject a gate: `workflows.review_gate` with `runId`, `decision`, and a `note`. Show what the gate protects (the rows and the outward card) before asking.
 - Resume a paused run: `workflows.resume`. Continue a long-run checkpoint: `workflows.continue`.
 - Pause or arm the schedule: `workflows.set_schedule` with `enabled`. Arming refuses when the definition has no cadence or a connector is not ready; report the server's reason.
 - Send a deliverable: `workflows.builder.draft_deliverable_send` drafts first; a second call with `send_now: true` and `user_said` sends. Two separate confirmations.
 - Archive: `workflows.archive` turns the schedule off and hides the workflow; not reversible from here.
 
-Report the receipt's result verbatim. On `outcome_unknown`, read `workflows.state` again before resubmitting. Do not edit cards from this playbook; route definition changes to workflow-build so validation runs.
+Report the receipt's result verbatim. On `outcome_unknown`, read the state of the exact target: `workflows.schedule` for schedule changes, `workflows.state` for runs, and the deliverable's delivery history for sends. If the requested effect already happened, report it and do not resubmit. Do not edit cards from this playbook; route definition changes to workflow-build so validation runs.

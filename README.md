@@ -1,6 +1,6 @@
 # Ghost customer skills for Claude Code
 
-This is Ghost's customer plugin marketplace for Claude Code. Version 0.2.1 includes 23 playbooks for account research, meeting preparation, product context, graph corrections, and workflows.
+This is Ghost's customer plugin marketplace for Claude Code. Version 0.2.2 includes 23 playbooks for account research, meeting preparation, product context, graph corrections, and workflows.
 
 ## Install
 
@@ -40,7 +40,7 @@ See the [customer guide](plugins/ghost/README.md) and [acceptance scenarios](eva
 
 Each folder in `plugins/ghost/skills` is one customer job. Keep its description specific, give it a concrete deliverable, and route it to the shared [Ghost usage contract](plugins/ghost/references/working-with-ghost.md). Tool names in that contract are discovery hints, not a frozen API schema. Confirm capabilities against the connected server before use.
 
-To add a skill, follow [the authoring guide](plugins/ghost/references/authoring-playbooks.md). Keep all runtime references within the plugin directory so installation into Claude's cache works. Keep customer account data and private customer playbooks out of this distributable package.
+To add a skill, follow [the authoring guide](plugins/ghost/references/authoring-playbooks.md). Keep all runtime references within the plugin directory so installation into Claude's cache works. Keep customer account data, credentials, and private customer playbooks out of this distributable package. The bundled API helper is on-demand Python code; its security tests cover identity mismatches, credential handling, redirects, and request serialization.
 
 Run from this marketplace directory:
 
@@ -49,6 +49,8 @@ claude plugin validate . --strict
 claude plugin validate ./plugins/ghost --strict
 claude plugin validate ./plugins/ghost/skills --strict
 ```
+
+Run `python3 -m unittest discover -s tests -v` and `python3 scripts/validate_package.py` as well.
 
 Run the acceptance scenarios against synthetic fixtures before each release, then a designated test workspace for OAuth, real tool schemas, and evidence links. Manifest validation alone does not verify model behavior or server capabilities.
 

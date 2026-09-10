@@ -1,0 +1,8 @@
+[extend]
+useDefault = true
+
+[[rules]]
+id = "ghost-api-key"
+description = "Ghost workspace API credential"
+regex = '''\bghost_[0-9a-fA-F]{32,}\b'''
+keywords = ["ghost_"]

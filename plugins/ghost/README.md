@@ -4,7 +4,7 @@ Use your account history, customer conversations, commitments, and product conte
 
 ## Connect
 
-After loading or installing the plugin, open `/mcp`, select the plugin's Ghost connection, and complete the browser sign-in for the intended Ghost workspace. Then run `/ghost:start`. Credentials stay in Claude's authentication flow; this package contains no API keys.
+After loading or installing the plugin, open `/mcp`, select the plugin's Ghost connection, and complete the browser sign-in for the intended Ghost workspace. Then run `/ghost:start`. MCP credentials stay in Claude's authentication flow; this package contains no API keys.
 
 If Ghost is already connected separately, distinguish the existing connection from the plugin connection in `/mcp`. Authenticate and use one connection for the intended workspace. Do not assume a second connection belongs to the same workspace.
 
@@ -45,11 +45,15 @@ These names also support natural-language discovery. Example names above are fic
 
 ## Optional: an API key for pipeline, graph writes, and workflows
 
-Some jobs need the Ghost developer API: a deal list for your book or quarter, deterministic account filters, recent calls by attendee, lookalikes, graph corrections, and everything about workflows. Mint a key in the web app's Dev tab and export it as `GHOST_API_KEY` in the shell that runs Claude Code. Grants by job: `graph:read` for reads, `graph:write` for context and graph writes, both `workflows:read` and `workflows:run` for building and operating workflows. The playbooks never print the key, confirm before any write or spend, and fall back to asking you for scope when the key is absent.
+Some jobs need the Ghost developer API: a deal list for your book or quarter, deterministic account filters, recent calls by attendee, lookalikes, graph corrections, and everything about workflows. An owner, admin, or analyst can mint a key in the web app's Dev tab. Set it as `GHOST_API_KEY` in the environment that launches Claude Code without pasting it into chat or committing it. The API helper requires Python 3.11+ and verifies the key's workspace and user before customer-data requests. Use only the grants needed for the job, and revoke the key in the Dev tab when it is no longer needed. Grants by job: `graph:read` for reads, `graph:write` for context and graph writes, both `workflows:read` and `workflows:run` for building and operating workflows. The playbooks never print the key, confirm before any write or spend, and fall back to asking you for scope when the key is absent.
 
 ## What to expect
 
-Most playbooks read Ghost and produce answers or drafts. The write playbooks above can change the context library, save sources, correct the graph, and build or operate workflows; each shows the exact payload and waits for your yes, and workflow runs and deliveries also pass Ghost's own gates (validation before publish, a human gate before anything outward, your words recorded as consent). No playbook sends email or edits CRM fields; those remain handoffs. The plugin is guidance, not a server permission boundary. Ghost and Claude's existing permissions still apply.
+Most playbooks read Ghost and produce answers or drafts. The write playbooks above can change the context library, save sources, correct the graph, and build or operate workflows; each shows the exact payload and waits for your yes, and workflow runs and deliveries also pass Ghost's own gates (validation before publish, a human gate before anything outward, your words recorded as consent). Research and follow-up playbooks produce drafts. Approved full workflows and deliverable sends can send email or Slack messages, write CRM records, and update configured sheets, trackers, or context documents. An enabled schedule can repeat those effects in future runs. Treat `workflows:run` as permission to operate that automation, and review its destinations, rows, and actions before approving. Sample runs suppress outward effects but can still consume API, model, and judge usage.
+
+The plugin is guidance, not a server permission boundary. Ghost enforces API grants, workspace and workflow access, and its runtime gates; Claude controls local tool permissions. Approval words are recorded as the caller’s assertion of intent, not independent proof that a human clicked approval. Keep Claude’s normal permission checks enabled; do not broadly auto-allow shell or MCP writes to make onboarding easier.
+
+Ghost data retrieved by a playbook enters your Claude session and is subject to your organization’s Claude account, retention, and data-use settings. API request files and generated artifacts are local copies of that data. The package includes one on-demand API request helper; it installs no hooks or background processes and collects no separate telemetry.
 
 Available context depends on your workspace's connected data. A missing source, incomplete cohort, or historical CRM snapshot is labeled rather than filled in. The assistant asks for clarification when an account or person is ambiguous.
 

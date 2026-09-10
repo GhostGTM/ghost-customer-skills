@@ -9,7 +9,7 @@ Check whether a Ghost MCP connection and relevant tools are available. If sign-i
 
 Use authenticated metadata when available to identify the workspace; if the server does not expose it, say that and ask the user to verify the workspace in the connection flow. A listed tool is not proof of a successful authenticated read. Once a user names a known account, a narrow `search_accounts` call can verify usable account access without dumping their workspace.
 
-If `GHOST_API_KEY` is set in the environment, verify it with `GET https://app.ghostgtm.ai/api/v1/me` and report the workspace and grants it returns. Never print the key. If it is absent, mention that pipeline and cohort jobs work best with a key minted in the web app's Dev tab, and leave it there.
+If `GHOST_API_KEY` is set in the environment, run the bundled API helper’s `identity` command and report its workspace, user, and grants. Compare that identity with the intended MCP connection before combining either transport’s data; stop on a mismatch or unresolved identity. Never print the key. If it is absent, mention that pipeline and cohort jobs work best with a key minted in the web app's Dev tab, and leave it there.
 
 Offer the first task that fits their role: meeting prep for a seller, renewal/deal review for customer success, or a scoped voice-of-customer question for an operator. If they already provided a task, continue it using the appropriate playbook's instructions.
 
