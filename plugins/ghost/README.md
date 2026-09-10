@@ -33,13 +33,14 @@ If Ghost is already connected separately, distinguish the existing connection fr
 
 Playbooks that write to Ghost show the exact payload and wait for your yes:
 
-| Command                                               | What it writes                                                                   |
-| ----------------------------------------------------- | -------------------------------------------------------------------------------- |
-| `/ghost:context-update persona "Head of RevOps"`      | A context-library entry or the overview, created or updated                      |
-| `/ghost:add-source Acme paste of yesterday's call`    | A transcript, note, thread, or brief saved on the account                        |
-| `/ghost:graph-update Acme Jane is now VP Operations`  | A person, relationship, fact, firmographic gap, or label in the graph (API key)  |
-| `/ghost:workflow-build weekly renewal risk digest`    | A new workflow: plan, cards, validation, sample run, publish, schedule (API key) |
-| `/ghost:workflow-run renewal digest approve the gate` | Run, resume, approve, pause, or archive an existing workflow (API key)           |
+| Command                                                     | What it writes                                                                       |
+| ----------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `/ghost:context-update persona "Head of RevOps"`            | A context-library entry or the overview, created or updated                          |
+| `/ghost:add-source Acme paste of yesterday's call`          | A transcript, note, thread, or brief saved on the account                            |
+| `/ghost:graph-agent Acme reconcile contact titles from CRM` | Claude plans; Gemini reads approved sources and applies scoped graph edits (API key) |
+| `/ghost:graph-update Acme Jane is now VP Operations`        | A person, relationship, fact, firmographic gap, or label in the graph (API key)      |
+| `/ghost:workflow-build weekly renewal risk digest`          | A new workflow: plan, cards, validation, sample run, publish, schedule (API key)     |
+| `/ghost:workflow-run renewal digest approve the gate`       | Run, resume, approve, pause, or archive an existing workflow (API key)               |
 
 These names also support natural-language discovery. Example names above are fictional.
 
@@ -60,3 +61,5 @@ Available context depends on your workspace's connected data. A missing source, 
 To customize a repeated workflow, use `/ghost:create-playbook` in your customer project. Keep stable methodology in your skill; retrieve changing account and product information from Ghost when it runs. Your custom skills remain separate from this plugin's updates.
 
 This package targets Claude Code. Installation and authentication in other Claude surfaces have not been validated for this release.
+
+Live CRM validation uses the separate `crm:read` grant; confirmed CRM writes use `crm:write`. Neither implies the other. Account detail includes firmographics, and contact detail includes provenance and CRM IDs. The API also exposes ICPs and the other context areas as paginated resources. For Gemini execution grant `graph:read`, `graph:write`, and `research:run`, adding `crm:read` only when the plan reads CRM. Claude shows the scope and model-credit cap for approval, then Gemini executes directly and reports verified edits and gaps. API fees are separate from model usage; user-requested Gemini work is recorded separately from ingestion.

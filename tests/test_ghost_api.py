@@ -45,6 +45,36 @@ class HelperTests(unittest.TestCase):
         self.addCleanup(self.env.stop)
         self.api = api_module.GhostApi()
 
+    def test_complete_record_and_source_reads_use_fixed_origin(self):
+        record_id = "11111111-1111-4111-8111-111111111111"
+        for path in ("/data/accounts/" + record_id, "/data/people/" + record_id, "/data/firmographics?accountId=" + record_id, "/sources/" + record_id + "/content?offset=7", "/labels/" + record_id + "/assignments"):
+            with patch.object(self.api.opener, "open", return_value=Response({})) as send:
+                self.api.send("GET", path)
+                self.assertEqual(send.call_args.args[0].full_url, api_module.ORIGIN + api_module.PREFIX + path)
+
+    def test_validation_errors_preserve_actionable_paths_but_not_secrets_or_arbitrary_bodies(self):
+        other_key = "ghost_" + "ab" * 32
+        body = {"message": "Input validation failed", "data": {"issues": [{"path": ["arguments", "fields", 0, "op"], "message": "Invalid option: expected select or eq"}, {"path": ["arguments"], "message": KEY + " " + other_key}], "input": {"secret": "must not echo"}}}
+        error = urllib.error.HTTPError(api_module.ORIGIN, 400, "bad request", {}, Response(body))
+        with patch.object(self.api.opener, "open", side_effect=error) as send:
+            with self.assertRaises(api_module.ApiError) as caught:
+                self.api.send("POST", "/query", {"operation": "graph.query_connected_api"})
+        detail = caught.exception.detail
+        self.assertIn("arguments.fields.0.op", detail["validation"])
+        serialized = json.dumps(detail)
+        for secret in (KEY, other_key, "must not echo"):
+            self.assertNotIn(secret, serialized)
+        self.assertEqual(send.call_count, 1)
+        self.assertTrue(error.fp.closed)
+        self.assertIsNone(self.api.validation_detail({"message": "SQL failed", "data": {"fieldErrors": {"sql": ["private"]}}}))
+
+    def test_validation_details_are_bounded_and_cover_root_schema_errors(self):
+        detail = self.api.validation_detail({"message": "Invalid operation arguments", "data": {"formErrors": ["Unrecognized key: workspaceId"], "fieldErrors": {"fields": ["x" * 1000] * 10}}})
+        self.assertEqual(detail["request"], ["Unrecognized key: workspaceId"])
+        self.assertEqual(len(detail["fields"]), 3)
+        self.assertEqual(len(detail["fields"][0]), 300)
+
+
     def test_missing_or_header_injecting_key_fails_without_network(self):
         for key in ("", "ordinary-value", KEY + "\r\nX-Injected: yes"):
             with patch.dict(os.environ, {"GHOST_API_KEY": key}), self.assertRaises(api_module.ApiError):

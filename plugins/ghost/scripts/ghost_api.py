@@ -21,7 +21,10 @@ PREFIX = "/api/v1"
 MAX_INPUT = 1_000_000
 MAX_RESPONSE = 8_000_000
 UUID = r"[0-9a-fA-F]{8}(?:-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}"
-READ_PATH = re.compile(r"/(?:me|capabilities|data/[a-z][a-z0-9_-]{0,63}|operations(?:/" + UUID + r")?)\Z")
+READ_PATH = re.compile(
+    r"/(?:me|capabilities|data/[a-z][a-z0-9_-]{0,63}(?:/" + UUID + r")?"
+    r"|operations(?:/" + UUID + r")?|sources/" + UUID + r"/content|labels/" + UUID + r"/assignments)\Z"
+)
 
 
 class ApiError(Exception):
@@ -110,6 +113,14 @@ class GhostApi:
                 except (ValueError, UnicodeError, RecursionError):
                     raise ApiError("INVALID_RESPONSE", "Ghost returned a non-JSON response; no retry was made.") from None
         except urllib.error.HTTPError as error:
+            validation = None
+            if error.code == 400:
+                try:
+                    raw_error = error.read(16_001)
+                    if len(raw_error) <= 16_000:
+                        validation = self.validation_detail(parse_json(raw_error))
+                except (OSError, ValueError, UnicodeError, RecursionError):
+                    pass
             error.close()
             if 300 <= error.code < 400:
                 message = "Redirect refused; credentials were not forwarded. Check the Ghost service connection."
@@ -119,10 +130,17 @@ class GhostApi:
                 message = "Rate limited. Wait and inspect existing receipts before any further operation."
             elif error.code >= 500:
                 message = "Ghost did not confirm the outcome. Inspect operation receipts and the target before retrying; no retry was made."
+            elif error.code == 400:
+                message = "Check the operation's exact inputSchema at /capabilities. Use /query only for readOnly operations and /operations for writes or paid work; no retry was made."
+            elif error.code == 404:
+                message = "Use /capabilities to discover operations and /data/{resource} for collections (for example /data/icps); do not guess routes."
             else:
                 message = "Ghost rejected the request. Inspect its catalog and target state; no retry was made."
             # Do not emit arbitrary server error bodies or exception reprs.
-            raise ApiError("HTTP_ERROR", message, error.code, idempotency_key) from None
+            safe_error = ApiError("HTTP_ERROR", message, error.code, idempotency_key)
+            if validation:
+                safe_error.detail["validation"] = validation
+            raise safe_error from None
         except (urllib.error.URLError, TimeoutError, OSError):
             raise ApiError("TRANSPORT_ERROR", "Request outcome is unconfirmed. Inspect the operation receipts and target before retrying; no retry was made.", receipt_id=idempotency_key) from None
 
@@ -131,6 +149,36 @@ class GhostApi:
         if not isinstance(result, dict) or not all(isinstance(result.get(k), str) and result[k] for k in ("workspaceId", "userId")):
             raise ApiError("INVALID_IDENTITY", "Ghost did not return a usable workspace and user identity.")
         return result
+
+    def validation_detail(self, value):
+        """Return bounded field diagnostics only from recognized validation errors."""
+        if not isinstance(value, dict) or value.get("message") not in ("Input validation failed", "Invalid operation arguments"):
+            return None
+        data = value.get("data")
+        if not isinstance(data, dict):
+            return None
+        def clean(text):
+            return re.sub(r"ghost_[A-Za-z0-9_-]{16,256}", "[REDACTED]", text.replace(self.key, "[REDACTED]"))[:300]
+        result = {}
+        fields = data.get("fieldErrors")
+        if isinstance(fields, dict):
+            for name, messages in list(fields.items())[:20]:
+                if isinstance(name, str) and not name.startswith("ghost_") and re.fullmatch(r"[A-Za-z_][A-Za-z0-9_.]{0,119}", name) and isinstance(messages, list):
+                    result[name] = [clean(message) for message in messages[:3] if isinstance(message, str)]
+        issues = data.get("issues")
+        if isinstance(issues, list):
+            for issue in issues[:20]:
+                if not isinstance(issue, dict) or not isinstance(issue.get("path"), list):
+                    continue
+                path = issue["path"]
+                if not path or any(str(part).startswith("ghost_") for part in path) or any(not isinstance(part, (str, int)) or not re.fullmatch(r"[A-Za-z0-9_]{1,80}", str(part)) for part in path):
+                    continue
+                if isinstance(issue.get("message"), str):
+                    result[".".join(map(str, path))[:120]] = [clean(issue["message"])]
+        form_errors = data.get("formErrors")
+        if isinstance(form_errors, list):
+            result["request"] = [clean(message) for message in form_errors[:3] if isinstance(message, str)]
+        return result or None
 
     def request(self, spec, workspace_id, user_id):
         if not workspace_id or not user_id:
