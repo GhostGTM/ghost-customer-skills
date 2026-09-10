@@ -1,0 +1,14 @@
+{
+	"name": "ghost-customer-skills",
+	"owner": { "name": "Ghost" },
+	"metadata": {
+		"description": "Customer playbooks for working with Ghost in Claude Code."
+	},
+	"plugins": [
+		{
+			"name": "ghost",
+			"source": "./plugins/ghost",
+			"description": "Turn your Ghost account history into meeting prep, deal reviews, follow-ups, and expansion plans."
+		}
+	]
+}

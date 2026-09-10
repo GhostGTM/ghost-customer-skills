@@ -1,0 +1,58 @@
+# Ghost for Claude Code
+
+Use your account history, customer conversations, commitments, and product context inside Claude Code.
+
+## Connect
+
+After loading or installing the plugin, open `/mcp`, select the plugin's Ghost connection, and complete the browser sign-in for the intended Ghost workspace. Then run `/ghost:start`. Credentials stay in Claude's authentication flow; this package contains no API keys.
+
+If Ghost is already connected separately, distinguish the existing connection from the plugin connection in `/mcp`. Authenticate and use one connection for the intended workspace. Do not assume a second connection belongs to the same workspace.
+
+## Choose a playbook
+
+| Command                                                    | What you get                                              |
+| ---------------------------------------------------------- | --------------------------------------------------------- |
+| `/ghost:start`                                             | Connection check and a suggested first task               |
+| `/ghost:account-brief Acme`                                | What matters about an account now, with sources           |
+| `/ghost:meeting-prep Acme renewal discussion`              | Meeting objective, context, questions, and next-step ask  |
+| `/ghost:follow-up Acme latest meeting`                     | A grounded email draft in your voice                      |
+| `/ghost:deal-review Acme renewal`                          | Evidence-based deal assessment and next moves             |
+| `/ghost:stakeholder-map Acme`                              | Known relationships, buying roles, and coverage gaps      |
+| `/ghost:commitments Acme`                                  | Open promises, owners, dates, and overdue items           |
+| `/ghost:reconnect my dormant relationships`                | Reconnection candidates and relevant message drafts       |
+| `/ghost:prioritize-accounts my renewals this month`        | An explained, bounded account action queue                |
+| `/ghost:expansion-plan Acme`                               | Evidence-backed expansion hypotheses and validation steps |
+| `/ghost:voice-of-customer enterprise onboarding friction`  | Customer themes, source quotes, and coverage limits       |
+| `/ghost:call-recap Acme last pricing call`                 | The transcript, a recap, or what a person said, verbatim  |
+| `/ghost:renewal-prep Acme FY27`                            | Commercial facts table, objection history, and the ask    |
+| `/ghost:customer-lookup which customers use our API`       | A filtered account list with evidence and coverage        |
+| `/ghost:segment-accounts tier 1 accounts against our ICPs` | Fit per account and criterion, cohort comparison          |
+| `/ghost:proof-finder onboarding time savings`              | Case-study and reference candidates with customer quotes  |
+| `/ghost:competitive-intel Contoso this year`               | Competitor mentions, displacement, and lost-deal reasons  |
+| `/ghost:create-playbook our renewal review`                | A reusable customer-specific Claude Code skill            |
+
+Playbooks that write to Ghost show the exact payload and wait for your yes:
+
+| Command                                               | What it writes                                                                   |
+| ----------------------------------------------------- | -------------------------------------------------------------------------------- |
+| `/ghost:context-update persona "Head of RevOps"`      | A context-library entry or the overview, created or updated                      |
+| `/ghost:add-source Acme paste of yesterday's call`    | A transcript, note, thread, or brief saved on the account                        |
+| `/ghost:graph-update Acme Jane is now VP Operations`  | A person, relationship, fact, firmographic gap, or label in the graph (API key)  |
+| `/ghost:workflow-build weekly renewal risk digest`    | A new workflow: plan, cards, validation, sample run, publish, schedule (API key) |
+| `/ghost:workflow-run renewal digest approve the gate` | Run, resume, approve, pause, or archive an existing workflow (API key)           |
+
+These names also support natural-language discovery. Example names above are fictional.
+
+## Optional: an API key for pipeline, graph writes, and workflows
+
+Some jobs need the Ghost developer API: a deal list for your book or quarter, deterministic account filters, recent calls by attendee, lookalikes, graph corrections, and everything about workflows. Mint a key in the web app's Dev tab and export it as `GHOST_API_KEY` in the shell that runs Claude Code. Grants by job: `graph:read` for reads, `graph:write` for context and graph writes, both `workflows:read` and `workflows:run` for building and operating workflows. The playbooks never print the key, confirm before any write or spend, and fall back to asking you for scope when the key is absent.
+
+## What to expect
+
+Most playbooks read Ghost and produce answers or drafts. The write playbooks above can change the context library, save sources, correct the graph, and build or operate workflows; each shows the exact payload and waits for your yes, and workflow runs and deliveries also pass Ghost's own gates (validation before publish, a human gate before anything outward, your words recorded as consent). No playbook sends email or edits CRM fields; those remain handoffs. The plugin is guidance, not a server permission boundary. Ghost and Claude's existing permissions still apply.
+
+Available context depends on your workspace's connected data. A missing source, incomplete cohort, or historical CRM snapshot is labeled rather than filled in. The assistant asks for clarification when an account or person is ambiguous.
+
+To customize a repeated workflow, use `/ghost:create-playbook` in your customer project. Keep stable methodology in your skill; retrieve changing account and product information from Ghost when it runs. Your custom skills remain separate from this plugin's updates.
+
+This package targets Claude Code. Installation and authentication in other Claude surfaces have not been validated for this release.

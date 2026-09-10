@@ -1,0 +1,8 @@
+{
+	"mcpServers": {
+		"ghost": {
+			"type": "http",
+			"url": "https://mcp.ghostgtm.ai/mcp"
+		}
+	}
+}

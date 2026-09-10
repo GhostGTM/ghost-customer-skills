@@ -1,0 +1,17 @@
+{
+	"name": "ghost",
+	"version": "0.2.0",
+	"description": "Evidence-backed sales and marketing playbooks that read and write your Ghost workspace, including workflows.",
+	"author": {
+		"name": "Ghost"
+	},
+	"homepage": "https://ghostgtm.ai",
+	"keywords": [
+		"account-intelligence",
+		"customer-success",
+		"ghost",
+		"marketing",
+		"product-marketing",
+		"sales"
+	]
+}
