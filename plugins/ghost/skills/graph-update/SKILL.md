@@ -6,7 +6,7 @@ argument-hint: "[account or person] [what to change or record]"
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/working-with-ghost.md`. This is a confirmed action and it needs `GHOST_API_KEY` with the `graph:write` grant; MCP has no graph-correction tools. Without a key, prepare the exact change as a handoff.
 
-Claude Code can investigate a small correction using ordinary graph/source reads and live CRM reads when granted, then submit the explicit edit itself. The user need not supply the final value before that investigation. This direct path needs no Gemini run, `graph.agent_preview`, or `research:run` grant and has no Ghost model charge; normal API fees apply. A returned receipt can still complete asynchronously.
+Claude Code can investigate a small correction using ordinary graph/source reads and live CRM reads when granted, then submit the explicit edit itself. The user need not supply the final value before that investigation. This direct path needs no managed AI run, `graph.agent_preview`, or `research:run` grant and has no Ghost model charge; normal API fees apply. A returned receipt can still complete asynchronously.
 
 Read the current state first so the change targets real rows: `search_accounts` for the account, `find_person` or `get_account_network` for the person id, `get_deal_context` for a deal id, `read_source` for a source id. Quote the before value.
 
@@ -28,4 +28,4 @@ Show the change list as before and after rows, say whether it will apply now or 
 
 Read the row back and compare its stored value with the intended `after` value before reporting a verified update. If they differ, report the mismatch and preserved receipt, inspect the actual state, and stop; never automatically replay the run, clear the field, or treat an approved proposal as proof of the intended value. Do not batch unrelated accounts into one operation, and stop at the first error.
 
-For a job that needs an agent to inspect connected sources and populate fields across accounts, route to `graph-agent`: Claude scopes and gets approval, then Gemini executes the edits. Do not route delegated execution to a proposal-only loop.
+For a job that needs an agent to inspect connected sources and populate fields across accounts, route to `graph-agent`: Claude scopes and gets approval, then Ghost executes the edits. Do not route delegated execution to a proposal-only loop.
