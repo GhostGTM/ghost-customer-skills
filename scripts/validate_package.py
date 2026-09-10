@@ -51,5 +51,5 @@ for path in PLUGIN.rglob("*"):
 
 cases = re.findall(r"^### (\d+)\.", (ROOT / "evals/acceptance.md").read_text(), re.M)
 require([int(case) for case in cases] == list(range(1, len(cases) + 1)), "Acceptance cases must be consecutive")
-require(len(cases) >= 44, "Missing security acceptance cases")
+require(len(cases) >= 45, "Missing security acceptance cases")
 print(f"Validated Ghost {manifest['version']}: {len(skills)} skills, {len(cases)} acceptance cases, fixed MCP origin, local runtime references.")
