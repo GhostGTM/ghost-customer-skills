@@ -1,6 +1,6 @@
 # Ghost customer skills for Claude Code
 
-This is Ghost's customer plugin marketplace for Claude Code. Version 0.2.0 includes 23 playbooks for account research, meeting preparation, product context, graph corrections, and workflows.
+This is Ghost's customer plugin marketplace for Claude Code. Version 0.2.1 includes 23 playbooks for account research, meeting preparation, product context, graph corrections, and workflows.
 
 ## Install
 

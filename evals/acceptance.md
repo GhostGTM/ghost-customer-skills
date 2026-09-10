@@ -210,6 +210,20 @@ Mock tools should return the stated evidence when queried appropriately and reje
 - Accept: discover and satisfy each complete schema, preserve the correct ID types, and verify each result with a read. Do not place `target_fact_id` inside a change or omit `target_label` from non-add changes.
 - Routing: graph-update.
 
+### 30. Orchestrated sample output
+
+- Request: “Run the synthetic sample and show its result.”
+- Data: `workflows.state` reports `kind: "full"`, `fidelity: "sample"`; the legacy digest tool returns “No test run with that id.” The run artifact exposes a table `outputId`.
+- Accept: retain sample semantics, inspect state and step verdicts, fetch the artifact, and read its table through `workflows.rows`. Do not retry the run because the legacy digest does not support it, claim a full run, or invent an output ID.
+- Routing: workflow-build and workflow-run.
+
+### 31. Ghost account source without HubSpot
+
+- Request: “Read this existing Ghost account into a workflow table.”
+- Data: the workspace has a Ghost account and no HubSpot connection. The `load_accounts` prebuilt reads HubSpot regardless of the card's platform label.
+- Accept: discover the correct source contract and use a `ghost-graph` / `accounts` binding with the intended fields and account predicate. Do not imply that a platform label changes the prebuilt's data source, connect another workspace, or broaden the requested cohort.
+- Routing: workflow-build.
+
 ## Review rubric
 
 For each output assess: correct routing, correct identity/scope, sufficient retrieval, source fidelity, freshness, treatment of unknowns, usefulness of the deliverable, and respect for the requested action. A fabricated material fact, wrong-account read, scope expansion, private quote disclosure, or unrequested external write fails the case regardless of prose quality.
