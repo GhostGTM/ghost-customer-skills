@@ -1,10 +1,12 @@
 ---
 name: graph-update
-description: Correct or add to the Ghost graph: a person's title or status, a new contact on an account, a relationship between people, a fact, an empty firmographic field, or a workspace label or a selected context match. Use for "that's wrong in Ghost" and "record this"; use context-update for the context library and CRM tools for CRM fields.
+description: Correct or add to the Ghost graph: a person's title or status, a new contact on an account, a relationship between people, a fact, an empty firmographic field, or a workspace label or a selected context match. Use for a small account/contact correction, "that's wrong in Ghost" and "record this"; use context-update for the context library and CRM tools for CRM fields.
 argument-hint: "[account or person] [what to change or record]"
 ---
 
 Read `${CLAUDE_PLUGIN_ROOT}/references/working-with-ghost.md`. This is a confirmed action and it needs `GHOST_API_KEY` with the `graph:write` grant; MCP has no graph-correction tools. Without a key, prepare the exact change as a handoff.
+
+Claude Code can investigate a small correction using ordinary graph/source reads and live CRM reads when granted, then submit the explicit edit itself. The user need not supply the final value before that investigation. This direct path needs no managed AI run, `graph.agent_preview`, or `research:run` grant and has no Ghost model charge; normal API fees apply. A returned receipt can still complete asynchronously.
 
 Read the current state first so the change targets real rows: `search_accounts` for the account, `find_person` or `get_account_network` for the person id, `get_deal_context` for a deal id, `read_source` for a source id. Quote the before value.
 
@@ -22,8 +24,8 @@ Build one `graph.apply_update` (writes immediately) or `graph.propose_update` (l
 - `workspace_label`: `label_name`, `entity_kind` (account or contact), `person_id` for a contact. Needs the `admin` grant and an owner or admin membership.
 - `deal_note` and `deal_field`: `hubspot_deal_id` from `get_deal_context`, with `statement` or `field` and `after`. Deal status changes are refused here; they are CRM operations.
 
-Show the change list as before and after rows, say whether it will apply now or wait for review, and wait for a yes. Submit with `POST /operations`, a fresh `Idempotency-Key`, and the user's words as `reason`. Poll the receipt. `succeeded` with a result means applied; `needs_review` requires inspecting the result before deciding which changes remain unapplied; `outcome_unknown` means read the target again before retrying.
+Show the change list as before and after rows, say whether it will apply now or wait for review, and obtain or use the user's existing approval for that exact change. Submit with `POST /operations`, a fresh `Idempotency-Key`, and the user's words as `reason`. Poll the receipt. `succeeded` with a result means applied; `needs_review` requires inspecting the result before deciding which changes remain unapplied; `outcome_unknown` means read the target again before retrying.
 
 Read the row back and compare its stored value with the intended `after` value before reporting a verified update. If they differ, report the mismatch and preserved receipt, inspect the actual state, and stop; never automatically replay the run, clear the field, or treat an approved proposal as proof of the intended value. Do not batch unrelated accounts into one operation, and stop at the first error.
 
-For a job that needs an agent to inspect connected sources and populate fields across accounts, route to `graph-agent`: Claude scopes and gets approval, then Gemini executes the edits. Do not route delegated execution to a proposal-only loop.
+For a job that needs an agent to inspect connected sources and populate fields across accounts, route to `graph-agent`: Claude scopes and gets approval, then Ghost executes the edits. Do not route delegated execution to a proposal-only loop.

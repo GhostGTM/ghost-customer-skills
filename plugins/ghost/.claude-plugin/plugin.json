@@ -1,6 +1,6 @@
 {
 	"name": "ghost",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"description": "Evidence-backed sales and marketing playbooks that read and write your Ghost workspace, including workflows.",
 	"author": {
 		"name": "Ghost"
