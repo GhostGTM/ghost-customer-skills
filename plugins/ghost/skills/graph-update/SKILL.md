@@ -1,6 +1,6 @@
 ---
 name: graph-update
-description: Correct or add to the Ghost graph: a person's title or status, a new contact on an account, a relationship between people, a fact, an empty firmographic field, or a workspace label. Use for "that's wrong in Ghost" and "record this"; use context-update for the context library and CRM tools for CRM fields.
+description: Correct or add to the Ghost graph: a person's title or status, a new contact on an account, a relationship between people, a fact, an empty firmographic field, or a workspace label or a selected context match. Use for "that's wrong in Ghost" and "record this"; use context-update for the context library and CRM tools for CRM fields.
 argument-hint: "[account or person] [what to change or record]"
 ---
 
@@ -15,12 +15,15 @@ Build one `graph.apply_update` (writes immediately) or `graph.propose_update` (l
 - `person_field`: `person_id`, `field` (name, title, role_inferred, status, department, is_champion, email, linkedin_url, headline, location), `after`. Booleans as the strings `"true"` or `"false"`.
 - `add_person`: `target_label` (full name) plus any of title, email, linkedin_url, department, headline, location; `link_source_ids` to connect the person to the calls they came from.
 - `add_relationship`: `from_entity_id` and `from_entity_kind`, `to_entity_id` and `to_entity_kind` (`account_person` or `customer`), `relation_type` (introduced, connected_to, knows, reports_to, worked_with, referred, advises, works_at), and the user's `statement`.
+- `relation_edit`: selected context matches with exact `from_entity_id`/kind, `to_entity_id`/kind, `relation_type`, `mode`, and `statement`. Resolve allowed endpoint kinds, relation names, and add/retire/replace requirements from the live catalog; context IDs are not names. Explicit removal/replacement affects existing matches and needs that exact change shown and approved.
 - `fact`: free-text context on the account in `statement`; `fact_comment` to annotate an existing fact, with `target_fact_id` on the outer operation arguments (not inside the change).
 - `account_field`: `field` (domain, industry, employee_count, hq_city, hq_country, growth_stage), `after`, and `enrichment_source` when the value came from outside. Fills empty fields only; it never overwrites an existing first-party value.
 - `attendance_correction`: `person_id` and `source_id` when someone was recorded on a call they did not attend.
 - `workspace_label`: `label_name`, `entity_kind` (account or contact), `person_id` for a contact. Needs the `admin` grant and an owner or admin membership.
 - `deal_note` and `deal_field`: `hubspot_deal_id` from `get_deal_context`, with `statement` or `field` and `after`. Deal status changes are refused here; they are CRM operations.
 
-Show the change list as before and after rows, say whether it will apply now or wait for review, and wait for a yes. Submit with `POST /operations`, a fresh `Idempotency-Key`, and the user's words as `reason`. Poll the receipt. `succeeded` with a result means applied; `needs_review` means a proposal exists and nothing changed yet; `outcome_unknown` means read the target again before retrying.
+Show the change list as before and after rows, say whether it will apply now or wait for review, and wait for a yes. Submit with `POST /operations`, a fresh `Idempotency-Key`, and the user's words as `reason`. Poll the receipt. `succeeded` with a result means applied; `needs_review` requires inspecting the result before deciding which changes remain unapplied; `outcome_unknown` means read the target again before retrying.
 
 Report the receipt's result verbatim. Then read the row back and show the after value. Do not batch unrelated accounts into one operation, and stop at the first error.
+
+For a job that needs an agent to inspect connected sources and populate fields across accounts, route to `graph-agent`: Claude scopes and gets approval, then Gemini executes the edits. Do not route delegated execution to a proposal-only loop.

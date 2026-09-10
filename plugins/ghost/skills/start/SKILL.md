@@ -11,6 +11,8 @@ Use authenticated metadata when available to identify the workspace; if the serv
 
 If `GHOST_API_KEY` is set in the environment, run the bundled API helper’s `identity` command and report its workspace, user, and grants. Compare that identity with the intended MCP connection before combining either transport’s data; stop on a mismatch or unresolved identity. Never print the key. If it is absent, mention that pipeline and cohort jobs work best with a key minted in the web app's Dev tab, and leave it there.
 
+For API setup distinguish stored graph reads (`graph:read`), Ghost edits (`graph:write`), direct live CRM reads (`crm:read`), and confirmed CRM writes (`crm:write`). CRM read and write are independent; never default to write merely to validate CRM data. Delegated Gemini graph execution needs `graph:read`, `graph:write`, and `research:run`, plus `crm:read` if its approved queries use HubSpot. An existing key is not silently upgraded; report missing grants. Workflow execution is separate automation authority with the effects described in the shared contract.
+
 Offer the first task that fits their role: meeting prep for a seller, renewal/deal review for customer success, or a scoped voice-of-customer question for an operator. If they already provided a task, continue it using the appropriate playbook's instructions.
 
 Return connection status, any specific missing prerequisite, and at most three relevant command examples. Do not claim all connectors work because one Ghost lookup succeeds.
