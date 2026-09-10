@@ -33,20 +33,24 @@ If Ghost is already connected separately, distinguish the existing connection fr
 
 Playbooks that write to Ghost show the exact payload and wait for your yes:
 
-| Command                                                     | What it writes                                                                       |
-| ----------------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| `/ghost:context-update persona "Head of RevOps"`            | A context-library entry or the overview, created or updated                          |
-| `/ghost:add-source Acme paste of yesterday's call`          | A transcript, note, thread, or brief saved on the account                            |
-| `/ghost:graph-agent Acme reconcile contact titles from CRM` | Claude plans; Gemini reads approved sources and applies scoped graph edits (API key) |
-| `/ghost:graph-update Acme Jane is now VP Operations`        | A person, relationship, fact, firmographic gap, or label in the graph (API key)      |
-| `/ghost:workflow-build weekly renewal risk digest`          | A new workflow: plan, cards, validation, sample run, publish, schedule (API key)     |
-| `/ghost:workflow-run renewal digest approve the gate`       | Run, resume, approve, pause, or archive an existing workflow (API key)               |
+| Command                                                    | What it writes                                                                       |
+| ---------------------------------------------------------- | ------------------------------------------------------------------------------------ |
+| `/ghost:context-update persona "Head of RevOps"`           | A context-library entry or the overview, created or updated                          |
+| `/ghost:add-source Acme paste of yesterday's call`         | A transcript, note, thread, or brief saved on the account                            |
+| `/ghost:graph-agent this cohort reconcile titles from CRM` | Claude plans; Gemini reads approved sources and applies scoped graph edits (API key) |
+| `/ghost:graph-update Acme Jane is now VP Operations`       | A person, relationship, fact, firmographic gap, or label in the graph (API key)      |
+| `/ghost:workflow-build weekly renewal risk digest`         | A new workflow: plan, cards, validation, sample run, publish, schedule (API key)     |
+| `/ghost:workflow-run renewal digest approve the gate`      | Run, resume, approve, pause, or archive an existing workflow (API key)               |
 
 These names also support natural-language discovery. Example names above are fictional.
 
 ## Optional: an API key for pipeline, graph writes, and workflows
 
 Some jobs need the Ghost developer API: a deal list for your book or quarter, deterministic account filters, recent calls by attendee, lookalikes, graph corrections, and everything about workflows. An owner, admin, or analyst can mint a key in the web app's Dev tab. Set it as `GHOST_API_KEY` in the environment that launches Claude Code without pasting it into chat or committing it. The API helper requires Python 3.11+ and verifies the key's workspace and user before customer-data requests. Use only the grants needed for the job, and revoke the key in the Dev tab when it is no longer needed. Grants by job: `graph:read` for reads, `graph:write` for context and graph writes, both `workflows:read` and `workflows:run` for building and operating workflows. The playbooks never print the key, confirm before any write or spend, and fall back to asking you for scope when the key is absent.
+
+For a small account or contact correction, `/ghost:graph-update` lets Claude Code read evidence and apply the exact edit directly. No Gemini run or Ghost model charge is required; normal API fees apply. For delegated batch reconciliation, `/ghost:graph-agent` has Claude plan the scope and budget, then Gemini executes the approved work. That path permits owners, admins and analysts with `graph:read`, `graph:write` and `research:run`; add `crm:read` for live CRM queries. It does not need `admin`. The older `/compute/*` refresh endpoints require both `admin` and an owner/admin workspace role.
+
+If an existing developer key is missing a grant, a Ghost system administrator can update it without rotating its secret. Provide the workspace, key name/ID and requested grants, never the secret. The current Dev page supports create and revoke, not editing grants. Run `/ghost:start` again after the update to recheck identity and access.
 
 ## What to expect
 

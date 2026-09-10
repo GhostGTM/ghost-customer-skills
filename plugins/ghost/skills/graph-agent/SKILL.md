@@ -1,10 +1,12 @@
 ---
 name: graph-agent
-description: Plan a bounded graph reconciliation or context-matching job in Claude Code, then have Ghost's Gemini executor read approved connected sources and apply the edits. Use for delegated graph population across named accounts; use graph-update when the user already supplies the exact values.
+description: Plan a bounded graph reconciliation or context-matching job in Claude Code, then have Ghost's Gemini executor read approved connected sources and apply the edits. Use for delegated batch graph population across named accounts; use graph-update for a small correction Claude can resolve with normal reads and apply directly.
 argument-hint: "[accounts or cohort] [fields or context matches to populate]"
 ---
 
-Read `${CLAUDE_PLUGIN_ROOT}/references/working-with-ghost.md` and `${CLAUDE_PLUGIN_ROOT}/references/api-requests.md`. This path requires a matching API identity with `graph:read`, `graph:write`, and `research:run`; live HubSpot reads also require `crm:read`. The caller must be an owner, admin, or analyst. Check the live catalog for availability and the exact schemas of `graph.agent_preview` and `graph.agent_run`.
+Read `${CLAUDE_PLUGIN_ROOT}/references/working-with-ghost.md` and `${CLAUDE_PLUGIN_ROOT}/references/api-requests.md`. This path requires a matching API identity with `graph:read`, `graph:write`, and `research:run`; live HubSpot reads also require `crm:read`. The caller must be an owner, admin, or analyst; the `admin` grant is not required. The older `/compute/*` refresh endpoints are a separate path requiring both `admin` and owner/admin membership. Check the live catalog for availability and the exact schemas of `graph.agent_preview` and `graph.agent_run`.
+
+Explain the plan, progress, receipts and costs in customer terms; background job infrastructure is not a setup step or a customer decision.
 
 Claude Code creates the plan. Gemini executes it inside Ghost: it chooses among the approved reads, evaluates their evidence, and directly applies permitted field changes and selected context matches. Do not insert a second Gemini confirmation or proposal stage. A user can instead ask for a draft plan only; that does not authorize execution.
 

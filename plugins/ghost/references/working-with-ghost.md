@@ -43,6 +43,14 @@ For every `workflows.builder.<tool>` operation, the outer `arguments` is `{ "wor
 
 Grants: context writes need `graph:write` and an owner, admin, or analyst membership; graph updates need `graph:write`; workspace labels also need the `admin` grant and an owner or admin membership; workflow reads need `workflows:read` and workflow mutations need `workflows:run`, so end-to-end workflow authoring needs both grants. Publishing, go-live, and schedule changes require the workflow author; starting runs and archiving also allow workspace admins. Use the live catalog and returned access errors as the authority.
 
+### Choose direct edits or delegated batches
+
+For a small account/contact correction, use `graph-update`. Claude can read the evidence and determine the explicit value, then submit `graph.apply_update` with the user's approval. This uses `graph:write` and ordinary reads; no Gemini call or `research:run` grant is needed for the edit, and no Ghost model charge is incurred. Normal API fees apply. Poll the receipt and read back the record. Use `graph.propose_update` only when the user wants to leave it for review.
+
+For delegated research and population across accounts, use `graph-agent`. It needs `graph:read`, `graph:write`, `research:run`, and an owner/admin/analyst role; live CRM queries also need `crm:read`. It does not require `admin`. The older `/compute/*` refresh endpoints require BOTH the `admin` grant and an owner/admin workspace role. Granting `admin` alone never promotes an analyst or implies other grants.
+
+A Ghost system administrator can add or remove grants on a specific developer key through an audited operator change without rotating its secret. The current Dev UI creates and revokes keys; no public endpoint lets a key grant itself access. Identify the workspace, key name/ID and exact missing grant; never request the secret. After an authorized update, check `/me` and `/capabilities` again. Existing keys are not automatically expanded, and scope changes do not change membership.
+
 ### Complete account data and live CRM reconciliation
 
 `GET /data/accounts/{id}` includes stored firmographics and related-data links. `GET /data/people/{id}` includes the reviewed contact details, work history, observations, provenance, status and CRM identity. Follow paginated `people`, `firmographics`, `deals`, `facts`, `sources`, and `feedback` links with `accountId`; relationships and classifications support `entityId`. Collections use `limit`/`cursor`. Source text is paged separately at `/sources/{id}/content` with `offset`/`length`. Null/missing values and truncated pages remain unknown, not evidence that no data exists.
