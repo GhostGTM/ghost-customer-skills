@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Ghost API requests with credentials kept out of command-line arguments.
 
-Python 3.9+, standard library only. No automatic retries or redirect following.
+Python 3.11+, standard library only. No automatic retries or redirect following.
 Input files contain request data, never credentials. Identity is checked before
 each customer-data request; it is not proof of a human's approval to mutate.
 """
@@ -56,6 +56,8 @@ def parse_json(raw):
 
 class GhostApi:
     def __init__(self):
+        if sys.version_info < (3, 11):
+            raise ApiError("UNSUPPORTED_PYTHON", "Use Python 3.11 or newer with current security patches.")
         self.key = os.environ.get("GHOST_API_KEY", "")
         if not re.fullmatch(r"ghost_[A-Za-z0-9_-]{16,256}", self.key):
             raise ApiError("KEY_MISSING_OR_INVALID", "Set GHOST_API_KEY in the launching environment; do not paste it into chat or arguments.")
@@ -108,6 +110,7 @@ class GhostApi:
                 except (ValueError, UnicodeError, RecursionError):
                     raise ApiError("INVALID_RESPONSE", "Ghost returned a non-JSON response; no retry was made.") from None
         except urllib.error.HTTPError as error:
+            error.close()
             if 300 <= error.code < 400:
                 message = "Redirect refused; credentials were not forwarded. Check the Ghost service connection."
             elif error.code in (401, 403):

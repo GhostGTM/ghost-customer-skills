@@ -26,6 +26,14 @@ class Response(io.BytesIO):
 
 
 class HelperTests(unittest.TestCase):
+    def test_unsupported_python_fails_before_credentials_or_network(self):
+        with patch.object(api_module.sys, "version_info", (3, 10, 20)), patch.object(api_module.os.environ, "get") as env_get, patch.object(api_module.urllib.request, "build_opener") as opener:
+            with self.assertRaises(api_module.ApiError) as error:
+                api_module.GhostApi()
+            self.assertEqual(error.exception.detail["code"], "UNSUPPORTED_PYTHON")
+            env_get.assert_not_called()
+            opener.assert_not_called()
+
     def test_ambiguous_or_non_json_input_is_rejected(self):
         for raw in (b'{"path":"/query","path":"/operations"}', b'{"value":NaN}', b'{"value":Infinity}', b'\xff'):
             with self.subTest(raw=raw), self.assertRaises((ValueError, UnicodeError)):
@@ -100,6 +108,8 @@ class HelperTests(unittest.TestCase):
                 self.api.send("POST", "/query", {})
             self.assertEqual(send.call_count, 1)
             self.assertNotIn(KEY, json.dumps(result.exception.detail))
+            if isinstance(cause, urllib.error.HTTPError):
+                self.assertTrue(cause.closed)
 
     def test_result_and_error_redaction(self):
         self.assertNotIn(KEY, self.api.redact({"result": {"unexpectedEcho": KEY}}))

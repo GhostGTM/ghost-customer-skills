@@ -1,6 +1,6 @@
 # Calling the Ghost API
 
-Use the bundled `scripts/ghost_api.py` with Python 3.9+ for API requests. Resolve `${CLAUDE_PLUGIN_ROOT}` to this installed plugin's directory before constructing the command. Do not modify the installed helper to change its host, skip identity checks, enable redirects, or work around a refusal.
+Use the bundled `scripts/ghost_api.py` with Python 3.11+ and current security patches for API requests. Resolve `${CLAUDE_PLUGIN_ROOT}` to this installed plugin's directory before constructing the command. Do not modify the installed helper to change its host, skip identity checks, enable redirects, or work around a refusal.
 
 First read identity; this command reads only `/me` and needs no customer-data access:
 
