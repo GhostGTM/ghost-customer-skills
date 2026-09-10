@@ -28,7 +28,7 @@ argument-hint: "[account] [renewal period]"
 
 In the body, include the specific decision rules and deliverable. Consume `$ARGUMENTS` as task input, not shell commands. Preserve automatic discovery unless the user wants an explicit-only skill. Avoid auto-allowing tools through `allowed-tools` or adding hooks merely to avoid permission prompts.
 
-Make the new skill self-contained: adapt the essential connection, identity, evidence, freshness, and action rules from `working-with-ghost.md`, either into its body or a reference copied inside the new skill directory. Use relative links to its own references. Do not leave `${CLAUDE_PLUGIN_ROOT}` references that would resolve to the wrong package, absolute author-machine paths, or dependencies on another installed skill's hidden instructions.
+Make the new skill self-contained: adapt the essential connection, identity, evidence, freshness, and action rules from `working-with-ghost.md`, either into its body or a reference copied inside the new skill directory. Use relative links to its own references. If the custom playbook uses the API, copy the reviewed API helper and its request guidance into the customer skill; retain fixed-origin, identity, credential, and no-retry checks. Do not leave `${CLAUDE_PLUGIN_ROOT}` references that would resolve to the wrong package, absolute author-machine paths, or dependencies on another installed skill's hidden instructions.
 
 ## Check usefulness
 

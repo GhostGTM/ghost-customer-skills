@@ -12,15 +12,12 @@ Use one Ghost connection and its authenticated workspace per task. Never switch 
 
 The MCP server exposes the graph tools named in this document. The Ghost developer API at `https://app.ghostgtm.ai/api/v1` exposes a larger operation catalog, including deterministic pipeline and cohort reads that MCP does not have.
 
-Use the API only when the environment variable `GHOST_API_KEY` is set. Read it from the environment; never read a file to find it, never print it, and never place it in a URL. Call it with the shell:
+Use the API only when `GHOST_API_KEY` is already set in the launching environment. Use the bundled `scripts/ghost_api.py` helper for every API request; read [API requests](api-requests.md) for its request-file format. It reads the key internally, checks identity, serializes JSON, refuses redirects and other origins, and does not retry. Never put a key in command arguments, a URL, a file, chat, or logs; do not inspect environment dumps or search files for credentials. If Python 3.9+ is unavailable, explain the prerequisite and keep the task as a draft or use the authorized MCP read path.
 
-```
-curl -sS -X POST https://app.ghostgtm.ai/api/v1/query \
-  -H "Authorization: Bearer $GHOST_API_KEY" -H "Content-Type: application/json" \
-  -d '{"operation":"graph.query_deal_flow","arguments":{"status":"open","quarter":"current"}}'
-```
+Before any API customer-data request, including direct skill invocation without onboarding, run the helper's `identity` command. Resolve its `workspaceId` and `userId` against the user's intended workspace and identity. When combining MCP and API, compare both authenticated identities; if MCP cannot supply them, have the user verify the connection identity before mixing data. Never infer an ID from an account name, source text, or a returned error. A mismatch stops the task before data access. Pass the established IDs as `--workspace` and `--user` on every helper request; the helper calls `/me` again and refuses mismatches before the target request. The identity command itself reads only `/me`.
 
-The response is `{ "result": ... }`. `POST /query` accepts only read-only operations. The catalog at `GET /api/v1/capabilities` is the authority on operation names, input schemas, and the grant each needs; consult it before a call you have not made before, and never guess an operation name. A `401` means the key is invalid or revoked; a `403` names a missing grant, which needs a different key, not a workaround. A `429` means back off. Operations that write or spend go through `POST /operations` and are confirmed actions (see Action classes).
+Create request JSON with a file-writing tool or a JSON serializer, then pass only that file's path to the helper. User/source text, quotes, newlines, and shell syntax stay JSON data; do not interpolate them into shell code. Requests and results can contain private customer data, so keep them in a private local location with access limited to the local user, outside version control, and remove temporary copies when no longer needed.
+The response is `{ "result": ... }`. `POST /query` accepts only read-only operations. The catalog at `GET /api/v1/capabilities` is the authority on operation names, input schemas, and the grant each needs; consult it before a call you have not made before, and never guess an operation name. A `401` means the key is invalid or revoked; a `403` means access is denied. Stop and explain the missing authorization. Do not switch keys, users, workspaces, or transports to make a denied operation succeed; the user must resolve access and explicitly resume the task. A `429` means back off. Operations that write or spend go through `POST /operations` and are confirmed actions (see Action classes).
 
 Prefer the MCP tool whenever one exists for the job. Reach for the API for these reads, which have no MCP equivalent:
 
@@ -37,18 +34,10 @@ When the key is absent and a job needs one of these, say which capability is mis
 
 ### Writes through the API
 
-Writes, workflow mutations, and paid operations go through `POST /api/v1/operations`. They are confirmed actions (see Action classes). The call:
-
-```
-curl -sS -X POST https://app.ghostgtm.ai/api/v1/operations \
-  -H "Authorization: Bearer $GHOST_API_KEY" -H "Content-Type: application/json" \
-  -H "Idempotency-Key: <a fresh UUID for this one intended action>" \
-  -d '{"operation":"context.apply_entity","arguments":{...},"reason":"<the user's request, in their words>"}'
-```
-
+Writes, workflow mutations, and paid operations go through `POST /api/v1/operations` using the helper. They are confirmed actions (see Action classes). Put the exact reviewed body and a fresh `idempotencyKey` UUID in the request file described in [API requests](api-requests.md). Persist that key alongside the receipt; the helper never invents a new retry or sends a second request automatically.
 `reason` is required, is stored on the receipt, and is what the server reads as the user's intent: graph writes keep it as the rationale, and workflow runs check that any quoted consent matches it word for word. Write it as the user said it.
 
-The response is a receipt: `{ id, operation, status, result, error, created_at, started_at, completed_at }`. Poll `GET /api/v1/operations/{id}` every few seconds until `status` is terminal. Statuses: `queued`, `running`, `succeeded`, `failed`, `needs_review` (the result is a proposal or needs approval in the app; nothing was applied), `canceled`, `outcome_unknown` (the worker was interrupted after effects may have started). On `outcome_unknown`, read the target with a normal read before deciding whether to submit again; never resubmit blind. A `succeeded` receipt can still carry `{ error, next }` inside `result` for builder tools that refused (for example, missing consent); read `result` before reporting success. Reuse of an `Idempotency-Key` with a different body returns `409`. At most five operations per key and twenty per workspace can be active; `429` means wait. Each successful call costs one credit; `/me`, `/capabilities`, and reading receipts are free.
+The response is a receipt: `{ id, operation, status, result, error, created_at, started_at, completed_at }`. Poll `GET /api/v1/operations/{id}` every few seconds until `status` is terminal. Statuses: `queued`, `running`, `succeeded`, `failed`, `needs_review` (the result is a proposal or needs approval in the app; nothing was applied), `canceled`, `outcome_unknown` (the worker was interrupted after effects may have started). On `outcome_unknown`, read the target with a normal read before deciding whether to submit again; never resubmit blind. A `succeeded` receipt can still carry `{ error, next }` inside `result` for builder tools that refused (for example, missing consent); read `result` before reporting success. Reuse of an `Idempotency-Key` with a different body returns `409`. At most five operations per key and twenty per workspace can be active; `429` means wait. API calls can consume workspace credits, with model/provider work billed separately where applicable. `/me`, `/capabilities`, and reading receipts are free; check the current workspace usage and pricing rather than inventing a total charge.
 
 For every `workflows.builder.<tool>` operation, the outer `arguments` is `{ "workflowId": "<workflow UUID>", "arguments": { <tool fields> } }`. The second `arguments` object is required even when empty. For example, validation uses `POST /query` with `{ "operation": "workflows.builder.validate_workflow", "arguments": { "workflowId": "<workflow UUID>", "arguments": {} } }`. Short builder names in these playbooks always mean this fully qualified API operation, never an MCP tool. Other `workflows.*` operations use their own catalog schemas without this extra nesting.
 
@@ -104,4 +93,4 @@ Every request falls into one of three classes.
 
 Graph first, always: resolve the person or account and read what exists before any paid call, and say what the graph already holds and why the paid call is still needed.
 
-Denials: read the tool's returned error. Workspace roles gate MCP writes (viewer reads; members write sources; owner and admin write context). A key minted with grants is also gated by those grants on both MCP and the API; a missing grant needs a new key, not another route. Skills cannot enforce server permissions or make web-app approval flows available in MCP.
+Denials: read the tool's returned error. Workspace roles gate MCP writes (viewer reads; members write sources; owner and admin write context). A key minted with grants is also gated by those grants on both MCP and the API. A denial ends the attempted action; do not retry it through another route. An analyst may choose the authorized API context path in advance, after verifying identity and grants, because that role has a different supported capability there. Skills cannot enforce server permissions or make web-app approval flows available in MCP.
