@@ -39,8 +39,8 @@ Playbooks that write to Ghost show the exact payload and wait for your yes:
 | `/ghost:add-source Acme paste of yesterday's call`         | A transcript, note, thread, or brief saved on the account                              |
 | `/ghost:graph-agent this cohort reconcile titles from CRM` | Claude plans; Ghost analyzes approved sources and applies scoped graph edits (API key) |
 | `/ghost:graph-update Acme Jane is now VP Operations`       | A person, relationship, fact, firmographic gap, or label in the graph (API key)        |
-| `/ghost:workflow-build weekly renewal risk digest`         | A new workflow: plan, cards, validation, sample run, publish, schedule (API key)       |
-| `/ghost:workflow-run renewal digest approve the gate`      | Run, resume, approve, pause, or archive an existing workflow (API key)                 |
+| `/ghost:workflow-build weekly renewal risk digest`         | A new workflow: plan, cards, delivery, review, sample run, publish, schedule (API key) |
+| `/ghost:workflow-run renewal digest approve the gate`      | Run, review, set delivery or cadence, pause, or archive an existing workflow (API key) |
 
 These names also support natural-language discovery. Example names above are fictional.
 

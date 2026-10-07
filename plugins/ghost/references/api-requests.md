@@ -49,18 +49,18 @@ The query envelope is exactly `{ "operation": "<catalog name>", "arguments": { .
 
 The helper prints the response body verbatim as one line of JSON on stdout. Routes do not share one envelope, so read the shape for the route you called before reaching into it; applying `.result` or `.items` to the wrong route yields null, not an error.
 
-| Route                                | Body                                                                         | Reach the payload with |
-| ------------------------------------ | ---------------------------------------------------------------------------- | ---------------------- |
-| `GET /me`                            | The identity object itself                                                   | `.`                    |
-| `GET /capabilities`                  | The catalog itself: `assistantGuidance`, `productGuide`, `operations`, `resources` | `.operations[]`        |
-| `POST /query`                        | `{ "result": <the operation's output> }`                                     | `.result`              |
-| `POST /operations`                   | One receipt: `id`, `operation`, `status`, `result`, `error`, timestamps      | `.status`, `.result`   |
-| `GET /operations/{id}`               | One receipt, same fields                                                     | `.status`, `.result`   |
-| `GET /operations`                    | `{ "items": [receipts], "nextCursor": <uuid or null> }`                      | `.items[]`             |
-| `GET /data/{resource}`               | `{ "items": [records], "nextCursor": <uuid or null> }`                       | `.items[]`             |
-| `GET /data/{resource}/{id}`          | The record itself                                                            | `.`                    |
-| `GET /labels/{id}/assignments`       | `{ "items": [...], "nextCursor": ... }`                                      | `.items[]`             |
-| `GET /sources/{id}/content`          | `{ "sourceId", "content", "totalCharacters", "nextOffset" }`                 | `.content`             |
+| Route                          | Body                                                                               | Reach the payload with |
+| ------------------------------ | ---------------------------------------------------------------------------------- | ---------------------- |
+| `GET /me`                      | The identity object itself                                                         | `.`                    |
+| `GET /capabilities`            | The catalog itself: `assistantGuidance`, `productGuide`, `operations`, `resources` | `.operations[]`        |
+| `POST /query`                  | `{ "result": <the operation's output> }`                                           | `.result`              |
+| `POST /operations`             | One receipt: `id`, `operation`, `status`, `result`, `error`, timestamps            | `.status`, `.result`   |
+| `GET /operations/{id}`         | One receipt, same fields                                                           | `.status`, `.result`   |
+| `GET /operations`              | `{ "items": [receipts], "nextCursor": <uuid or null> }`                            | `.items[]`             |
+| `GET /data/{resource}`         | `{ "items": [records], "nextCursor": <uuid or null> }`                             | `.items[]`             |
+| `GET /data/{resource}/{id}`    | The record itself                                                                  | `.`                    |
+| `GET /labels/{id}/assignments` | `{ "items": [...], "nextCursor": ... }`                                            | `.items[]`             |
+| `GET /sources/{id}/content`    | `{ "sourceId", "content", "totalCharacters", "nextOffset" }`                       | `.content`             |
 
 A `/query` result carries whatever the operation returns; many operations (`graph.expand_segment`, `graph.query_deal_flow`, the list operations) return their own paging fields inside `.result`, described by that operation's catalog entry. Paged collections end when `nextCursor` (or the operation's own cursor) is null; a page with fewer rows than `limit` is not proof there are no more.
 
