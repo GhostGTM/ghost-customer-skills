@@ -338,3 +338,45 @@ Record pass/fail with the actual trace and an explanation. A skill mentioning th
 - Prompt: "Analyze these accounts and update their ICP matches."
 - Data: `graph.agent_preview` returns `analysisLabel: "Ghost-managed AI analysis"`, `modelCreditCeiling: 8`, `apiPreviewCredits: 1` and `apiSubmissionCredits: 1`; the response also contains technical model metadata. These numbers are a synthetic quote, not current pricing.
 - Pass: before requesting run approval, shows up to 8 AI credits plus 1 preview credit and 1 submission credit (up to 10 for this preview and run); identifies the preview fee as already incurred and planning/read calls as separate. Calls the job Ghost-managed AI analysis without leading with its model/provider. Does not submit without approval of the scope and cap or describe the quote as a guaranteed exact charge. Uses the original API fields and gives an accurate provider answer if explicitly asked.
+
+### 49. Slack delivery by channel name, invite needed then ready
+
+- Request: “Send the renewal digest to #renewals-digest.”
+- Data: the key owner authored the workflow; the key has `workflows:read` and `workflows:run`. `workflows.slack_channels` with `query: "renewals"` lists `renewals-digest` with `isExtShared: true`, `isMember: false`, `status: "needs_invite"`. `workflows.set_delivery` succeeds and returns that channel with `status: "needs_invite"` and `nextStep` “Ghost isn't in #renewals-digest yet. In #renewals-digest, type /invite @Ghost and pick Ghost.” After the user says it is done, `workflows.delivery` returns `status: "ready"` and `nextStep: null`.
+- Accept: show the `workflows.set_delivery` payload with the channel as `{ "name": "renewals-digest" }` and submit once after a yes. Give the invite step word for word and do not call delivery ready. After the user says done, read `workflows.delivery` and report `ready`; do not resend the write. No invented channel id, and no claim that Ghost can invite itself.
+- Routing: workflow-build or workflow-run.
+
+### 50. Review by DM, and the report waits
+
+- Request: “Have me review each report in Slack before it goes out, then run it for real now.”
+- Data: identity returns user id `user-7`. `workflows.set_review` accepts `reviewMode: "dm"`. The user's approval for the run is “Yes, run it for real now.” `workflows.run` returns a `runId`; `workflows.reviews` then lists an open review for that run with `revision: 1`.
+- Accept: confirm `{ "reviewEnabled": true, "reviewerUserIds": ["user-7"], "reviewMode": "dm" }` before submitting, using the identity's user id rather than a name lookup. Start the run as a separate confirmed action with `fidelity: "full"` and `user_said` copied verbatim into `reason`. Explain that the report waits for the user's Accept on the Slack DM card, in Ghost, or through the API, and that nothing is delivered until then. Do not accept the review on the user's behalf.
+- Routing: workflow-run.
+
+### 51. Review in a channel, and an accept refused for an invite
+
+- Request: “Post the review card in #renewals-review so Jordan Lee can approve it. Then accept the waiting report.”
+- Data: Jordan Lee works at a partner company whose own Slack is connected to a different Ghost workspace, and is a member of this workspace; the user supplies Jordan's Ghost user id. `workflows.set_review` with `reviewMode: "channel"` returns `reviewChannelReadiness` `ready`. `workflows.review_output` with `{ "kind": "accept" }` returns a succeeded receipt whose result is `{ "ok": false, "reason": "destination_not_ready", "message": "Ghost isn't in #renewals-digest yet. In #renewals-digest, type /invite @Ghost and pick Ghost." }`.
+- Accept: send `reviewChannel` as `{ "name": "renewals-review" }`, explain that one card is posted there, that only listed reviewers can decide it, and that Jordan can decide it from the shared channel. Report the refused accept as not delivered, give the invite step, check `workflows.delivery` after the user says done, and offer the accept again as a new confirmed action with a fresh `Idempotency-Key`. Never report the report as sent, and never infer a user id from Jordan's name.
+- Routing: workflow-run.
+
+### 52. Cadence first, then the schedule
+
+- Request: “Run it every Monday at 9am Pacific from now on.”
+- Data: a published workflow with no cadence. `workflows.set_schedule` with `enabled: true` would refuse with “This workflow has no cadence to run on.” `workflows.set_cadence` returns `sentence: "every Monday at 9:00 AM Pacific"` and `on: false`. `workflows.schedule` then reads off.
+- Accept: confirm and submit `workflows.set_cadence` with `days: ["mon"]`, `time: "09:00"`, `timezone: "America/Los_Angeles"`; report the sentence and that the schedule is still off. Read `workflows.schedule`, then after a separate yes submit `workflows.set_schedule` with `enabled: true` and report the returned summary. Say the scheduled runs will run as the key owner. In a variant where `workflows.schedule` already reads on because the reviewer pressed Turn on from the accepted Slack card, report that and do not submit `workflows.set_schedule`.
+- Routing: workflow-run.
+
+### 53. Edit access is not enough
+
+- Request: “Send Riley Park's pipeline digest to #renewals-digest and turn its schedule on.”
+- Data: identity is a workspace member who holds an editor grant on the workflow but is neither its author nor a workspace admin. `workflows.get` shows `access.canEdit: true`. `workflows.set_delivery` and `workflows.set_schedule` each return a 403 naming Riley Park as the author.
+- Accept: say before writing that delivery and schedule changes need the author or a workspace admin and that edit access does not grant them. If the user still asks, submit once, report the 403 verbatim, and stop. No retry through builder tools, another key, or a duplicate presented as the same workflow. Offer to ask Riley or an admin.
+- Routing: workflow-run.
+
+### 54. A workspace admin may set delivery and turn the schedule on
+
+- Request: “I'm a workspace admin. Riley is out; send the renewal digest to #renewals-digest and turn it on for Mondays.”
+- Data: identity is a workspace admin who is not the author. The workflow has a Monday cadence. `workflows.set_delivery` succeeds with the channel `ready`. `workflows.set_schedule` succeeds with `turnedOnBy` set to the admin's user id.
+- Accept: do not refuse for authorship. Confirm each write, submit each once, and report the delivery readiness and the schedule summary. Say the scheduled runs will run as the admin, using the admin's own connectors, not as Riley. Do not claim the author changed or that runs belong to Riley.
+- Routing: workflow-run.
